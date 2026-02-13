@@ -50,7 +50,7 @@
 
     .wrap{
       position:relative;
-      width:min(880px, 96vw);
+      width:min(920px, 96vw);
       aspect-ratio: 16/9;
       display:flex;
       align-items:center;
@@ -58,29 +58,17 @@
       filter: drop-shadow(0 22px 50px rgba(0,0,0,0.45));
     }
 
-    /* ХОМЯЧКИ ПОД САЛФЕТКОЙ */
-    .ham{
+    /* белая подложка под салфетку, чтобы не было "шахматки" прозрачности */
+    .doily-under{
       position:absolute;
-      width:84px; height:84px;
-      image-rendering: pixelated;
-      pointer-events:none;
-      z-index:1;                 /* под салфеткой */
-      opacity:0;
-      transform: translateY(18px) rotate(0deg);
-      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.25));
-      animation: peek 3.8s ease-in-out infinite;
-    }
-    .ham.h2{ width:74px; height:74px; animation-delay: 0.9s; animation-duration: 4.2s; }
-    .ham.h3{ width:66px; height:66px; animation-delay: 1.6s; animation-duration: 3.6s; }
-
-    /* “выглядывает” -> виден короткое время -> прячется */
-    @keyframes peek{
-      0%, 35%   { opacity:0; transform: translateY(22px) rotate(0deg); }
-      45%, 70%  { opacity:1; transform: translateY(0px) rotate(0deg); }
-      80%, 100% { opacity:0; transform: translateY(22px) rotate(0deg); }
+      inset:6%;
+      background:#ffffff;
+      border-radius:24px;
+      z-index:1;
+      opacity:0.98;
     }
 
-    /* салфетка (поверх хомяков) */
+    /* салфетка */
     .doily-img{
       position:absolute;
       inset:0;
@@ -91,14 +79,44 @@
       pointer-events:none;
     }
 
-    /* поцелуй (под карточкой, но над салфеткой) */
+    /* хомячки ПОД салфеткой: только "выглядывают" (без движения по кругу) */
+    .ham{
+      position:absolute;
+      width:86px; height:86px;
+      image-rendering: pixelated;
+      pointer-events:none;
+      z-index:1; /* под салфеткой */
+      opacity:0;
+      transform: translateY(18px) rotate(0deg);
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.25));
+      animation: peek 4.2s ease-in-out infinite;
+    }
+    .ham.h2{ width:76px; height:76px; animation-delay: 0.8s; animation-duration: 4.6s; }
+    .ham.h3{ width:66px; height:66px; animation-delay: 1.4s; animation-duration: 3.9s; }
+
+    /* чуть-чуть крутится на месте, но не перемещается */
+    .ham.spin { animation-name: peek, tinyspin; animation-duration: 4.2s, 2.4s; animation-timing-function: ease-in-out, linear; animation-iteration-count: infinite, infinite; }
+    .ham.h2.spin{ animation-duration: 4.6s, 2.9s; }
+    .ham.h3.spin{ animation-duration: 3.9s, 2.6s; }
+
+    @keyframes peek{
+      0%, 35%   { opacity:0; transform: translateY(22px) rotate(0deg); }
+      45%, 75%  { opacity:1; transform: translateY(0px) rotate(0deg); }
+      85%, 100% { opacity:0; transform: translateY(22px) rotate(0deg); }
+    }
+    @keyframes tinyspin{
+      0%{ transform: translateY(0px) rotate(0deg); }
+      100%{ transform: translateY(0px) rotate(360deg); }
+    }
+
+    /* поцелуй — меньше и под кнопками */
     .kiss{
       position:absolute;
-      z-index:2;
-      width:min(155px, 32vw);
+      z-index:2; /* под карточкой */
+      width:min(145px, 30vw);
       opacity:0.85;
       left: 58%;
-      top: 58%;
+      top: 60%;
       transform: translate(-50%, -50%) rotate(-10deg);
       pointer-events:none;
       filter: drop-shadow(0 10px 18px rgba(0,0,0,0.18));
@@ -108,7 +126,7 @@
     .card{
       position:relative;
       z-index:3;
-      width:min(560px, 86vw);
+      width:min(580px, 88vw);
       padding:30px 24px 22px;
       text-align:center;
       color:var(--ink);
@@ -152,19 +170,20 @@
       box-shadow: 0 10px 22px rgba(255,77,109,0.25);
     }
 
-    /* ВАЖНО: "Нет" сначала ОБЫЧНАЯ кнопка рядом с "Да" */
+    /* "Нет" — сначала обычная кнопка рядом с "Да" */
     #no{
       background:#e7e0e6;
       color:#3b1a22;
       font-weight:700;
-      position:relative;     /* сначала рядом */
+      position:relative;
       z-index:10;
     }
 
-    /* Когда начнет убегать — добавим класс */
+    /* когда убегает */
     #no.runaway{
-      position:fixed;        /* начинает убегать по экрану */
+      position:fixed;
       z-index:999;
+      left:0; top:0;
     }
 
     #message{
@@ -205,15 +224,18 @@
   <div class="stage" id="stage">
     <div class="wrap" id="wrap">
 
-      <!-- Хомячки под салфеткой: позиционируем у краёв -->
-      <img class="ham h1" src="./hamster.png" alt="" style="left:10%; top:33%;">
-      <img class="ham h2" src="./hamster.png" alt="" style="left:18%; top:82%;">
-      <img class="ham h3" src="./hamster.png" alt="" style="left:82%; top:76%;">
+      <!-- хомячки под салфеткой: фиксированные позиции -->
+      <img class="ham h1 spin" src="./hamster.png" alt="" style="left:10%; top:32%;">
+      <img class="ham h2 spin" src="./hamster.png" alt="" style="left:18%; top:82%;">
+      <img class="ham h3 spin" src="./hamster.png" alt="" style="left:86%; top:72%;">
 
-      <!-- Салфетка -->
+      <!-- белая подложка -->
+      <div class="doily-under" aria-hidden="true"></div>
+
+      <!-- салфетка -->
       <img class="doily-img" src="./doily.png" alt="" onerror="this.style.display='none'">
 
-      <!-- Поцелуй -->
+      <!-- поцелуй -->
       <img class="kiss" src="./kiss.png" alt="">
 
       <div class="card">
@@ -248,69 +270,80 @@
     setInterval(spawnHeart, 230);
     for(let i=0;i<18;i++) setTimeout(spawnHeart, i*120);
 
-    // "Нет" — сначала рядом, потом убегает и НЕ выходит за экран
+    // "Нет" — рядом с "Да", и НЕ выходит за экран
     const noBtn = document.getElementById("no");
     const message = document.getElementById("message");
     let runaway = false;
 
-    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
-    function rectCenter(r){ return { x:r.left + r.width/2, y:r.top + r.height/2 }; }
+    const PAD = 12;        // запас от краёв
+    const TRIGGER = 120;   // насколько близко курсор, чтобы убегать
 
-    function ensureRunawayMode(){
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+    function centerOf(rect){ return { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }; }
+
+    function enableRunaway(){
       if (runaway) return;
 
-      // берём текущие координаты кнопки (когда она рядом с "Да")
+      // фиксируем кнопку ровно там, где она была рядом с "Да"
       const r = noBtn.getBoundingClientRect();
-
       noBtn.classList.add("runaway");
-      // фиксируем позицию в тех же координатах, чтобы "не прыгала"
       noBtn.style.left = r.left + "px";
       noBtn.style.top  = r.top  + "px";
-
       runaway = true;
     }
 
-    function pushAway(cursorX, cursorY){
-      // включаем режим убегания, когда курсор достаточно близко
-      const r0 = noBtn.getBoundingClientRect();
-      const c0 = rectCenter(r0);
-      const d0 = Math.hypot(c0.x - cursorX, c0.y - cursorY);
-      const trigger = 130;
+    function pushAway(cx, cy){
+      // если ещё не убегает — проверим дистанцию
+      if (!runaway){
+        const r0 = noBtn.getBoundingClientRect();
+        const c0 = centerOf(r0);
+        const d0 = Math.hypot(c0.x - cx, c0.y - cy);
+        if (d0 <= TRIGGER) enableRunaway();
+        else return;
+      }
 
-      if (!runaway && d0 <= trigger) ensureRunawayMode();
-      if (!runaway) return;
+      const w = noBtn.offsetWidth;
+      const h = noBtn.offsetHeight;
 
-      const r = noBtn.getBoundingClientRect();
-      const c = rectCenter(r);
+      // текущая позиция кнопки (fixed)
+      const left = parseFloat(noBtn.style.left || "0");
+      const top  = parseFloat(noBtn.style.top  || "0");
 
-      const dx = c.x - cursorX;
-      const dy = c.y - cursorY;
+      // центр кнопки
+      const bx = left + w/2;
+      const by = top  + h/2;
+
+      const dx = bx - cx;
+      const dy = by - cy;
       const dist = Math.hypot(dx, dy);
 
-      if (dist > trigger) return;
+      if (dist > TRIGGER) return;
 
       const nx = dx / (dist || 1);
       const ny = dy / (dist || 1);
 
-      const strength = (trigger - dist) / trigger;
+      const strength = (TRIGGER - dist) / TRIGGER;
       const step = 18 + strength * 34;
-
-      const left = parseFloat(noBtn.style.left || r.left);
-      const top  = parseFloat(noBtn.style.top  || r.top);
 
       let newLeft = left + nx * step;
       let newTop  = top  + ny * step;
 
-      // НЕ ВЫХОДИТ ЗА ЭКРАН
-      const pad = 10;
-      newLeft = clamp(newLeft, pad, window.innerWidth  - r.width  - pad);
-      newTop  = clamp(newTop,  pad, window.innerHeight - r.height - pad);
+      // жёстко держим в пределах экрана (никогда не выйдет)
+      newLeft = clamp(newLeft, PAD, window.innerWidth  - w - PAD);
+      newTop  = clamp(newTop,  PAD, window.innerHeight - h - PAD);
 
       noBtn.style.left = newLeft + "px";
       noBtn.style.top  = newTop  + "px";
     }
 
+    // запуск отталкивания
     document.addEventListener("mousemove", (e) => pushAway(e.clientX, e.clientY));
+    noBtn.addEventListener("mouseenter", () => {
+      // если прямо навели на кнопку — включаем режим наверняка
+      enableRunaway();
+    });
+
+    // мобилка: при попытке тапнуть — отталкиваем
     noBtn.addEventListener("touchstart", (e) => {
       const t = e.touches[0];
       pushAway(t.clientX, t.clientY);
