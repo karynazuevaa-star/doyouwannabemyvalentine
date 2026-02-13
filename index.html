@@ -187,11 +187,11 @@
       overflow:hidden;
     }
 
-    /* ✅ ТЕКСТ ПО ЦЕНТРУ */
+    /* ✅ ТЕКСТ: десктоп меньше + чуть выше центра */
     .final-title{
       position:absolute;
       left:50%;
-      top:50%;
+      top:42%;                 /* чуть выше, чтобы не на лицо */
       transform: translate(-50%, -50%);
       z-index:12;
 
@@ -203,13 +203,14 @@
       text-shadow: 0 14px 34px rgba(0,0,0,0.55);
       padding: 0 12px;
 
-      /* 🖥️ ДЕСКТОП: МЕНЬШЕ */
-      font-size: clamp(26px, 3.6vw, 44px);
+      /* 🖥️ ДЕСКТОП: меньше */
+      font-size: clamp(24px, 2.6vw, 38px);
     }
 
-    /* 📱 телефон — крупнее */
+    /* 📱 телефон — крупнее и по центру */
     @media (max-width: 700px){
       .final-title{
+        top:50%;
         font-size: clamp(38px, 9vw, 60px);
         width: 92vw;
       }
@@ -244,7 +245,7 @@
 
   <div class="stage" id="stage">
     <div class="wrap" id="wrap">
-      <div class="card" id="card">
+      <div class="card">
 
         <div class="peek-zone" aria-hidden="true">
           <img class="ham h1" src="./hamster.png" alt="" style="left:-12px; bottom:-18px;">
@@ -290,8 +291,6 @@
     let started = false;
     const PAD = 14;
     const TRIGGER = 190;
-
-    // чуть быстрее
     const SPEED_BOOST = 1.18;
 
     let pos = { x: 0, y: 0 };
@@ -371,11 +370,9 @@
       const w = noFly.offsetWidth, h = noFly.offsetHeight;
       const bx = pos.x + w/2, by = pos.y + h/2;
 
-      // самобег
       vel.x += (Math.random()*2 - 1) * 0.55 * SPEED_BOOST;
       vel.y += (Math.random()*2 - 1) * 0.55 * SPEED_BOOST;
 
-      // убегает от курсора
       const dx = bx - cursor.x;
       const dy = by - cursor.y;
       const dist = Math.hypot(dx, dy);
