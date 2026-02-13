@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Валентинка 💘</title>
 
   <style>
@@ -25,7 +25,7 @@
         linear-gradient(135deg, var(--bg), var(--bg2));
     }
 
-    /* сердечки */
+    /* падающие сердечки */
     #hearts{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
     .heart{
       position:absolute;
@@ -51,15 +51,13 @@
       z-index:1;
     }
 
+    /* НЕ ставим filter/transform на wrap, чтобы не ломать fixed в Safari */
     .wrap{
       position:relative;
       width:min(980px, 96vw);
       display:flex;
       align-items:center;
       justify-content:center;
-      /* ВАЖНО: можно оставить тень, но она ломала fixed у кнопки внутри.
-         Теперь кнопка будет в body, так что это безопасно. */
-      filter: drop-shadow(0 22px 50px rgba(0,0,0,0.45));
     }
 
     .card{
@@ -112,27 +110,12 @@
       box-shadow: 0 10px 22px rgba(255,77,109,0.25);
     }
 
-    /* Пустышка "Нет" в карточке — занимает место рядом с "Да" */
+    /* место для "нет" рядом с "да" */
     #noSlot{
       background:#e7e0e6;
       color:#3b1a22;
       font-weight:900;
-      visibility:hidden; /* место есть, самой кнопки не видно */
-    }
-
-    /* Реальная кнопка "Нет" — в body, поверх всего */
-    #noFly{
-      position:fixed;
-      left:-9999px;
-      top:-9999px;
-      z-index:99999;
-      background:#e7e0e6;
-      color:#3b1a22;
-      font-weight:900;
-      display:inline-block;
-      opacity:1;
-      visibility:visible;
-      box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+      visibility:hidden;
     }
 
     #message{
@@ -164,14 +147,30 @@
     }
     .ham.h2{ width:80px; height:80px; animation-delay: .9s; animation-duration: 4.7s; }
     .ham.h3{ width:70px; height:70px; animation-delay: 1.6s; animation-duration: 3.9s; }
-
     @keyframes peek{
       0%, 35%   { opacity:0; transform: translateY(46px); }
       45%, 75%  { opacity:1; transform: translateY(0px); }
       85%, 100% { opacity:0; transform: translateY(46px); }
     }
 
-    /* Фейерверки */
+    /* Реальная кнопка "Нет" — всегда поверх всего */
+    #noFly{
+      position:fixed;
+      left:-9999px;
+      top:-9999px;
+      z-index:2147483647; /* максимальный слой */
+      background:#e7e0e6;
+      color:#3b1a22;
+      font-weight:900;
+      display:inline-block;
+      opacity:1;
+      visibility:visible;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+      transform: translateZ(0); /* фикс для iOS */
+      will-change: left, top;
+    }
+
+    /* фейерверки */
     #fw{
       position:fixed;
       inset:0;
@@ -180,33 +179,37 @@
       display:none;
     }
 
-    /* финальный экран: текст сверху, фото снизу */
+    /* финальный экран */
     .final-screen{
       position:relative;
       height:100vh;
       width:100vw;
       overflow:hidden;
     }
+
     .final-title{
       position:relative;
       z-index:12;
-      margin: 70px auto 0;
       width:min(980px, 94vw);
+      margin: 0 auto;
       text-align:center;
       color:#fff;
       font-weight:900;
-      font-size: clamp(30px, 5.2vw, 64px);
+      font-size: clamp(26px, 7vw, 64px);
       line-height:1.05;
       text-shadow: 0 14px 34px rgba(0,0,0,0.55);
-      padding: 0 12px;
+      padding-left: 12px;
+      padding-right: 12px;
+      padding-top: calc(env(safe-area-inset-top) + clamp(12px, 4vh, 44px));
     }
+
     .final-photo{
       position:absolute;
       left:50%;
-      bottom:-70px;
+      bottom: calc(-50px - env(safe-area-inset-bottom));
       transform: translateX(-50%) scale(0.12);
       transform-origin: center bottom;
-      width: min(600px, 90vw);   /* чуть больше */
+      width: min(620px, 90vw);
       height:auto;
       opacity: 0;
       animation: photoGrow 900ms cubic-bezier(.2,.9,.25,1) forwards;
@@ -224,7 +227,7 @@
   <div id="hearts" aria-hidden="true"></div>
   <canvas id="fw"></canvas>
 
-  <!-- Реальная кнопка "Нет" всегда в body -->
+  <!-- Настоящая "Нет" (вне карточки) -->
   <button id="noFly">Нет</button>
 
   <div class="stage" id="stage">
@@ -241,7 +244,6 @@
 
         <div class="btnrow">
           <button id="yes">Да ❤️</button>
-          <!-- место под кнопку "Нет" -->
           <button id="noSlot" aria-hidden="true">Нет</button>
         </div>
 
@@ -251,7 +253,7 @@
   </div>
 
   <script>
-    /* сердечки */
+    /* ---------- Сердечки ---------- */
     const heartsBox = document.getElementById('hearts');
     const heartChars = ["❤","💗","💖","💘","💞"];
     function spawnHeart(){
@@ -268,7 +270,7 @@
     setInterval(spawnHeart, 230);
     for(let i=0;i<18;i++) setTimeout(spawnHeart, i*120);
 
-    /* Кнопка "Нет" (всегда видимая) */
+    /* ---------- Кнопка "Нет" (не пропадает) ---------- */
     const noFly = document.getElementById("noFly");
     const noSlot = document.getElementById("noSlot");
     const message = document.getElementById("message");
@@ -276,6 +278,9 @@
     let started = false;
     const PAD = 14;
     const TRIGGER = 190;
+
+    // СДЕЛАЛА ЧУТЬ БЫСТРЕЕ:
+    const SPEED_BOOST = 1.18; // >1 = быстрее
 
     let pos = { x: 0, y: 0 };
     let vel = { x: 0, y: 0 };
@@ -294,7 +299,6 @@
       };
     }
 
-    // ставим "Нет" ровно поверх места рядом с "Да"
     function snapToSlot(){
       const r = noSlot.getBoundingClientRect();
       pos.x = r.left;
@@ -303,16 +307,14 @@
       noFly.style.top  = pos.y + "px";
     }
 
-    // первый запуск — поставить на место и дать начальный пинок
     function startRun(){
       if (started) return;
       snapToSlot();
-      vel.x = (Math.random()*2 - 1) * 10;
-      vel.y = (Math.random()*2 - 1) * 10;
+      vel.x = (Math.random()*2 - 1) * 10 * SPEED_BOOST;
+      vel.y = (Math.random()*2 - 1) * 10 * SPEED_BOOST;
       started = true;
     }
 
-    // включаем бег при приближении к месту/кнопке
     function maybeStart(){
       if (started) return;
       const r = noSlot.getBoundingClientRect();
@@ -322,6 +324,7 @@
       if (d < TRIGGER) startRun();
     }
 
+    // Курсор
     document.addEventListener("mousemove", (e) => {
       cursor.x = e.clientX;
       cursor.y = e.clientY;
@@ -335,14 +338,23 @@
       maybeStart();
     }, {passive:true});
 
-    // если ткнули по "Нет" — тоже стартуем
+    // Включаем бег при касании/наведении на саму кнопку
     noFly.addEventListener("mouseenter", startRun);
     noFly.addEventListener("touchstart", (e) => { startRun(); e.preventDefault(); }, {passive:false});
 
-    // физика: всегда чуть бродит + убегает от курсора + отскок от краёв
+    // Анти-баг: если вдруг пересчёт размеров/ориентация — вернуть кнопку в экран
+    function keepInsideScreen(){
+      if (!started) return;
+      const b = bounds();
+      pos.x = clamp(pos.x, b.minX, b.maxX);
+      pos.y = clamp(pos.y, b.minY, b.maxY);
+      noFly.style.left = pos.x + "px";
+      noFly.style.top  = pos.y + "px";
+    }
+
+    // Физика
     function step(){
       if (!started){
-        // пока не стартанули — держим ровно в слоте
         snapToSlot();
         requestAnimationFrame(step);
         return;
@@ -351,9 +363,9 @@
       const w = noFly.offsetWidth, h = noFly.offsetHeight;
       const bx = pos.x + w/2, by = pos.y + h/2;
 
-      // самобег чтобы не замирала
-      vel.x += (Math.random()*2 - 1) * 0.45;
-      vel.y += (Math.random()*2 - 1) * 0.45;
+      // самобег
+      vel.x += (Math.random()*2 - 1) * 0.55 * SPEED_BOOST;
+      vel.y += (Math.random()*2 - 1) * 0.55 * SPEED_BOOST;
 
       // убегание от курсора
       const dx = bx - cursor.x;
@@ -365,25 +377,29 @@
         const ny = dy / (dist || 1);
         const strength = (TRIGGER - dist) / TRIGGER;
 
-        const accel = 2.6 + strength * 9.4;
+        const accel = (2.8 + strength * 10.2) * SPEED_BOOST;
         vel.x += nx * accel;
         vel.y += ny * accel;
 
         // боковой финт
         const perpX = -ny, perpY = nx;
         const side = (Math.random() < 0.5 ? -1 : 1);
-        vel.x += perpX * side * (0.9 + strength * 2.0);
-        vel.y += perpY * side * (0.9 + strength * 2.0);
+        vel.x += perpX * side * (1.0 + strength * 2.2) * SPEED_BOOST;
+        vel.y += perpY * side * (1.0 + strength * 2.2) * SPEED_BOOST;
       }
 
-      // трение + лимит
-      vel.x *= 0.90; vel.y *= 0.90;
-      const vmax = 24;
+      // трение + лимит скорости (чуть быстрее)
+      vel.x *= 0.90;
+      vel.y *= 0.90;
+
+      const vmax = 28 * SPEED_BOOST;
       vel.x = clamp(vel.x, -vmax, vmax);
       vel.y = clamp(vel.y, -vmax, vmax);
 
-      pos.x += vel.x; pos.y += vel.y;
+      pos.x += vel.x;
+      pos.y += vel.y;
 
+      // отскок от краёв
       const b = bounds();
       if (pos.x < b.minX){ pos.x = b.minX; vel.x = Math.abs(vel.x) * 0.92; }
       if (pos.x > b.maxX){ pos.x = b.maxX; vel.x = -Math.abs(vel.x) * 0.92; }
@@ -400,35 +416,41 @@
     }
     requestAnimationFrame(step);
 
+    // чтобы она не "терялась" при изменении адресной строки Safari / повороте
+    window.addEventListener("resize", keepInsideScreen);
+    window.addEventListener("orientationchange", () => setTimeout(keepInsideScreen, 250));
+
     // если всё-таки нажали
     noFly.addEventListener("click", () => {
       message.textContent = "дорогой виталик, ты забыл с кем живешь. тут нет выбора. подумай еще раз :)";
     });
 
-    /* Фейерверки */
+    /* ---------- Фейерверки ---------- */
     const yesBtn = document.getElementById("yes");
     const stage = document.getElementById("stage");
     const wrap = document.getElementById("wrap");
     const fw = document.getElementById("fw");
     const ctx = fw.getContext("2d");
 
+    const isMobile = matchMedia("(pointer: coarse)").matches || window.innerWidth < 700;
     let particles = [];
+
     function resizeFW(){
       fw.width = window.innerWidth;
       fw.height = window.innerHeight;
     }
 
     function burst(x,y){
-      const count = 120;
+      const count = isMobile ? 70 : 120; // моб: меньше частиц
       for(let i=0;i<count;i++){
         const a = Math.random()*Math.PI*2;
-        const s = 2.8 + Math.random()*6.8;
+        const s = (isMobile ? 3.6 : 2.8) + Math.random()*(isMobile ? 7.6 : 6.8);
         particles.push({
           x,y,
           vx: Math.cos(a)*s,
           vy: Math.sin(a)*s,
-          life: 70 + Math.random()*35,
-          r: 2 + Math.random()*2.5,
+          life: (isMobile ? 55 : 80) + Math.random()*(isMobile ? 25 : 35),
+          r: (isMobile ? 2.2 : 2) + Math.random()*(isMobile ? 2.4 : 2.5),
           hue: Math.random()*360
         });
       }
@@ -438,11 +460,13 @@
       if (fw.style.display === "none") return;
 
       ctx.clearRect(0,0,fw.width,fw.height);
+
+      const decay = isMobile ? 1.35 : 1.0; // моб: быстрее "сгорают"
       particles = particles.filter(p => p.life > 0);
 
       for(const p of particles){
-        p.life -= 1;
-        p.vy += 0.05;
+        p.life -= decay;
+        p.vy += isMobile ? 0.07 : 0.05;
         p.vx *= 0.99;
         p.vy *= 0.99;
         p.x += p.vx;
@@ -457,7 +481,7 @@
     }
 
     yesBtn.addEventListener("click", () => {
-      // убираем кнопку "нет" на финальном экране (чтобы не мешала)
+      // убираем "нет" на финале
       noFly.style.display = "none";
 
       fw.style.display = "block";
@@ -471,15 +495,16 @@
         </div>
       `;
 
-      // быстрые фейерверки
       const start = performance.now();
+      const interval = isMobile ? 140 : 180; // моб: чаще залпы, выглядит быстрее
+
       (function loop(t){
         if (t - start < 8500){
           burst(
-            80 + Math.random()*(window.innerWidth - 160),
-            80 + Math.random()*(window.innerHeight * 0.55)
+            60 + Math.random()*(window.innerWidth - 120),
+            70 + Math.random()*(window.innerHeight * 0.55)
           );
-          setTimeout(()=>requestAnimationFrame(loop), 200);
+          setTimeout(()=>requestAnimationFrame(loop), interval);
         }
       })(start);
 
