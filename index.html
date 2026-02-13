@@ -107,19 +107,17 @@
       box-shadow: 0 10px 22px rgba(255,77,109,0.25);
     }
 
-    /* ВАЖНО: "Нет" всегда видима */
+    /* "Нет" всегда поверх и видна */
     #no{
       background:#e7e0e6;
       color:#3b1a22;
       font-weight:900;
-      position:relative;  /* сначала рядом */
-      z-index:9999;       /* поверх всего */
+      position:relative; /* сначала рядом */
+      z-index:9999;
       display:inline-block;
       opacity:1;
       visibility:visible;
     }
-
-    /* когда убегает */
     #no.runaway{
       position:fixed;
       z-index:9999;
@@ -140,7 +138,7 @@
       position:absolute;
       inset:0;
       pointer-events:none;
-      z-index:1;          /* под контентом карточки */
+      z-index:1;
       overflow:hidden;
       border-radius:28px;
     }
@@ -170,16 +168,51 @@
       z-index:10;
       display:none;
     }
-    .final{
-      position:relative;
-      z-index:11;
-      text-align:center;
+
+    /* финальный экран */
+    .final-screen{
+      position: relative;
+      height: 100vh;
+      width: 100vw;
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      flex-direction:column;
+      padding-top: 80px;
+    }
+
+    .final-title{
       color:#fff;
       font-weight:900;
       font-size: clamp(34px, 6vw, 68px);
       letter-spacing: 0.5px;
       text-shadow: 0 14px 34px rgba(0,0,0,0.55);
-      padding: 24px;
+      text-align:center;
+      z-index: 2;
+    }
+
+    /* фото: из крошечного -> нормальное, и снизу обрезаны ноги */
+    .final-photo{
+      position:absolute;
+      left:50%;
+      bottom:-60px; /* обрез ног снизу */
+      transform: translateX(-50%) scale(0.15); /* старт: крошечная */
+      transform-origin: center bottom;
+      width: min(420px, 72vw); /* не на весь экран */
+      height: auto;
+      max-height: 88vh;
+      object-fit: contain;
+      opacity: 0;
+      animation: photoGrow 900ms ease-out forwards;
+      filter: drop-shadow(0 22px 60px rgba(0,0,0,0.35));
+      pointer-events:none;
+    }
+
+    @keyframes photoGrow{
+      to{
+        transform: translateX(-50%) scale(1);
+        opacity: 1;
+      }
     }
   </style>
 </head>
@@ -228,13 +261,13 @@
     setInterval(spawnHeart, 230);
     for(let i=0;i<18;i++) setTimeout(spawnHeart, i*120);
 
-    // "Нет" — убегает хитро, но НЕ выходит за экран
+    // "Нет" — всегда бегает по полю, но не выходит за экран
     const noBtn = document.getElementById("no");
     const message = document.getElementById("message");
 
     let runaway = false;
     const PAD = 14;
-    const TRIGGER = 150;
+    const TRIGGER = 170;
 
     let pos = { x: 0, y: 0 };
     let vel = { x: 0, y: 0 };
@@ -245,18 +278,16 @@
     function enableRunaway(){
       if (runaway) return;
 
-      // фиксируем ровно на месте рядом с "Да"
       const r = noBtn.getBoundingClientRect();
-
       noBtn.classList.add("runaway");
+
       pos.x = r.left;
       pos.y = r.top;
 
-      // стартовый "пинок", чтобы не залипала
-      vel.x = (Math.random()*2 - 1) * 6;
-      vel.y = (Math.random()*2 - 1) * 6;
+      // стартовый пинок
+      vel.x = (Math.random()*2 - 1) * 8;
+      vel.y = (Math.random()*2 - 1) * 8;
 
-      // сразу ставим, чтобы она не "пропала"
       noBtn.style.left = pos.x + "px";
       noBtn.style.top  = pos.y + "px";
 
@@ -280,49 +311,50 @@
       const w = noBtn.offsetWidth;
       const h = noBtn.offsetHeight;
 
-      // от мыши к центру кнопки
       const bx = pos.x + w/2;
       const by = pos.y + h/2;
+
+      // самобег (не замирает никогда)
+      vel.x += (Math.random()*2 - 1) * 0.35;
+      vel.y += (Math.random()*2 - 1) * 0.35;
+
+      // от мышки — сильнее и с финтами
       const dx = bx - lastCursor.x;
       const dy = by - lastCursor.y;
       const dist = Math.hypot(dx, dy);
 
-      // если близко — ускоряемся от мышки + боковой уход
       if (dist < TRIGGER){
         const nx = dx / (dist || 1);
         const ny = dy / (dist || 1);
         const strength = (TRIGGER - dist) / TRIGGER;
 
-        const accel = 2.0 + strength * 7.6;
+        const accel = 2.2 + strength * 8.5;
         vel.x += nx * accel;
         vel.y += ny * accel;
 
-        // боковая "хитрость"
         const perpX = -ny;
         const perpY = nx;
         const side = (Math.random() < 0.5 ? -1 : 1);
-        vel.x += perpX * side * (0.7 + strength * 1.5);
-        vel.y += perpY * side * (0.7 + strength * 1.5);
+        vel.x += perpX * side * (0.8 + strength * 1.8);
+        vel.y += perpY * side * (0.8 + strength * 1.8);
       }
 
-      // трение + лимит скорости
       vel.x *= 0.90;
       vel.y *= 0.90;
-      const vmax = 20;
+
+      const vmax = 22;
       vel.x = clamp(vel.x, -vmax, vmax);
       vel.y = clamp(vel.y, -vmax, vmax);
 
       pos.x += vel.x;
       pos.y += vel.y;
 
-      // упор в края + отражение
       const b = bounds();
-      if (pos.x < b.minX){ pos.x = b.minX; vel.x = Math.abs(vel.x) * 0.85; }
-      if (pos.x > b.maxX){ pos.x = b.maxX; vel.x = -Math.abs(vel.x) * 0.85; }
-      if (pos.y < b.minY){ pos.y = b.minY; vel.y = Math.abs(vel.y) * 0.85; }
-      if (pos.y > b.maxY){ pos.y = b.maxY; vel.y = -Math.abs(vel.y) * 0.85; }
+      if (pos.x < b.minX){ pos.x = b.minX; vel.x = Math.abs(vel.x) * 0.9; }
+      if (pos.x > b.maxX){ pos.x = b.maxX; vel.x = -Math.abs(vel.x) * 0.9; }
+      if (pos.y < b.minY){ pos.y = b.minY; vel.y = Math.abs(vel.y) * 0.9; }
+      if (pos.y > b.maxY){ pos.y = b.maxY; vel.y = -Math.abs(vel.y) * 0.9; }
 
-      // абсолютная страховка внутри
       pos.x = clamp(pos.x, b.minX, b.maxX);
       pos.y = clamp(pos.y, b.minY, b.maxY);
 
@@ -330,12 +362,10 @@
       noBtn.style.top  = pos.y + "px";
     }
 
-    // курсор
     document.addEventListener("mousemove", (e) => {
       lastCursor.x = e.clientX;
       lastCursor.y = e.clientY;
 
-      // включаем убегание, если приблизились
       if (!runaway){
         const r0 = noBtn.getBoundingClientRect();
         const cx = r0.left + r0.width/2;
@@ -345,10 +375,8 @@
       }
     });
 
-    // если навели прямо на кнопку — включаем точно
     noBtn.addEventListener("mouseenter", () => enableRunaway());
 
-    // мобилка
     noBtn.addEventListener("touchstart", (e) => {
       const t = e.touches[0];
       lastCursor.x = t.clientX;
@@ -357,16 +385,14 @@
       e.preventDefault();
     }, {passive:false});
 
-    // анимация
     function raf(){ step(); requestAnimationFrame(raf); }
     requestAnimationFrame(raf);
 
-    // если вдруг кликнули
     noBtn.addEventListener("click", () => {
       message.textContent = "дорогой виталик, ты забыл с кем живешь. тут нет выбора. подумай еще раз :)";
     });
 
-    // "Да" -> "я знала!!!" + фейерверки
+    // фейерверки
     const yesBtn = document.getElementById("yes");
     const stage = document.getElementById("stage");
     const wrap = document.getElementById("wrap");
@@ -408,7 +434,12 @@
       fw.height = window.innerHeight;
 
       wrap.style.display = "none";
-      stage.innerHTML = `<div class="final">я знала!!!</div>`;
+      stage.innerHTML = `
+        <div class="final-screen">
+          <div class="final-title">я знала!!!</div>
+          <img class="final-photo" src="./IMG_9008.PNG" alt="">
+        </div>
+      `;
 
       const start = performance.now();
       (function loop(t){
