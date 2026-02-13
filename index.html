@@ -57,6 +57,8 @@
       display:flex;
       align-items:center;
       justify-content:center;
+      /* ВАЖНО: можно оставить тень, но она ломала fixed у кнопки внутри.
+         Теперь кнопка будет в body, так что это безопасно. */
       filter: drop-shadow(0 22px 50px rgba(0,0,0,0.45));
     }
 
@@ -110,22 +112,27 @@
       box-shadow: 0 10px 22px rgba(255,77,109,0.25);
     }
 
-    /* "Нет" — всегда видна, сначала рядом */
-    #no{
+    /* Пустышка "Нет" в карточке — занимает место рядом с "Да" */
+    #noSlot{
       background:#e7e0e6;
       color:#3b1a22;
       font-weight:900;
-      position:relative;
-      z-index:9999;
+      visibility:hidden; /* место есть, самой кнопки не видно */
+    }
+
+    /* Реальная кнопка "Нет" — в body, поверх всего */
+    #noFly{
+      position:fixed;
+      left:-9999px;
+      top:-9999px;
+      z-index:99999;
+      background:#e7e0e6;
+      color:#3b1a22;
+      font-weight:900;
       display:inline-block;
       opacity:1;
       visibility:visible;
-    }
-    /* когда убегает по всему экрану */
-    #no.runaway{
-      position:fixed;
-      z-index:9999;
-      left:0; top:0;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.18);
     }
 
     #message{
@@ -137,7 +144,7 @@
       z-index:5;
     }
 
-    /* хомячки выглядывают из-под карточки */
+    /* хомячки выглядывают */
     .peek-zone{
       position:absolute;
       inset:0;
@@ -164,13 +171,13 @@
       85%, 100% { opacity:0; transform: translateY(46px); }
     }
 
-    /* фейерверки canvas */
+    /* Фейерверки */
     #fw{
       position:fixed;
       inset:0;
       pointer-events:none;
       z-index:10;
-      display:none; /* включаем на "да" */
+      display:none;
     }
 
     /* финальный экран: текст сверху, фото снизу */
@@ -180,7 +187,6 @@
       width:100vw;
       overflow:hidden;
     }
-
     .final-title{
       position:relative;
       z-index:12;
@@ -194,15 +200,13 @@
       text-shadow: 0 14px 34px rgba(0,0,0,0.55);
       padding: 0 12px;
     }
-
-    /* фото: маленькая -> нормальная, снизу с обрезкой ног */
     .final-photo{
       position:absolute;
       left:50%;
-      bottom:-70px;                  /* обрез снизу */
-      transform: translateX(-50%) scale(0.12); /* старт: крошка */
+      bottom:-70px;
+      transform: translateX(-50%) scale(0.12);
       transform-origin: center bottom;
-      width: min(560px, 88vw);       /* чуть больше */
+      width: min(600px, 90vw);   /* чуть больше */
       height:auto;
       opacity: 0;
       animation: photoGrow 900ms cubic-bezier(.2,.9,.25,1) forwards;
@@ -220,9 +224,12 @@
   <div id="hearts" aria-hidden="true"></div>
   <canvas id="fw"></canvas>
 
+  <!-- Реальная кнопка "Нет" всегда в body -->
+  <button id="noFly">Нет</button>
+
   <div class="stage" id="stage">
     <div class="wrap" id="wrap">
-      <div class="card">
+      <div class="card" id="card">
 
         <div class="peek-zone" aria-hidden="true">
           <img class="ham h1" src="./hamster.png" alt="" style="left:-12px; bottom:-18px;">
@@ -234,7 +241,8 @@
 
         <div class="btnrow">
           <button id="yes">Да ❤️</button>
-          <button id="no">Нет</button>
+          <!-- место под кнопку "Нет" -->
+          <button id="noSlot" aria-hidden="true">Нет</button>
         </div>
 
         <div id="message"></div>
@@ -260,42 +268,24 @@
     setInterval(spawnHeart, 230);
     for(let i=0;i<18;i++) setTimeout(spawnHeart, i*120);
 
-    /* "Нет" бегает по всему экрану */
-    const noBtn = document.getElementById("no");
+    /* Кнопка "Нет" (всегда видимая) */
+    const noFly = document.getElementById("noFly");
+    const noSlot = document.getElementById("noSlot");
     const message = document.getElementById("message");
 
-    let runaway = false;
+    let started = false;
     const PAD = 14;
-    const TRIGGER = 180;
+    const TRIGGER = 190;
 
     let pos = { x: 0, y: 0 };
     let vel = { x: 0, y: 0 };
-    let lastCursor = { x: window.innerWidth/2, y: window.innerHeight/2 };
+    let cursor = { x: window.innerWidth/2, y: window.innerHeight/2 };
 
-    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
-
-    function enableRunaway(){
-      if (runaway) return;
-
-      const r = noBtn.getBoundingClientRect();
-      noBtn.classList.add("runaway");
-
-      pos.x = r.left;
-      pos.y = r.top;
-
-      // пинок, чтобы не залипала возле "да"
-      vel.x = (Math.random()*2 - 1) * 10;
-      vel.y = (Math.random()*2 - 1) * 10;
-
-      noBtn.style.left = pos.x + "px";
-      noBtn.style.top  = pos.y + "px";
-
-      runaway = true;
-    }
+    function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
 
     function bounds(){
-      const w = noBtn.offsetWidth;
-      const h = noBtn.offsetHeight;
+      const w = noFly.offsetWidth;
+      const h = noFly.offsetHeight;
       return {
         minX: PAD,
         minY: PAD,
@@ -304,22 +294,70 @@
       };
     }
 
-    function stepNo(){
-      if (!runaway) return;
+    // ставим "Нет" ровно поверх места рядом с "Да"
+    function snapToSlot(){
+      const r = noSlot.getBoundingClientRect();
+      pos.x = r.left;
+      pos.y = r.top;
+      noFly.style.left = pos.x + "px";
+      noFly.style.top  = pos.y + "px";
+    }
 
-      const w = noBtn.offsetWidth;
-      const h = noBtn.offsetHeight;
+    // первый запуск — поставить на место и дать начальный пинок
+    function startRun(){
+      if (started) return;
+      snapToSlot();
+      vel.x = (Math.random()*2 - 1) * 10;
+      vel.y = (Math.random()*2 - 1) * 10;
+      started = true;
+    }
 
-      const bx = pos.x + w/2;
-      const by = pos.y + h/2;
+    // включаем бег при приближении к месту/кнопке
+    function maybeStart(){
+      if (started) return;
+      const r = noSlot.getBoundingClientRect();
+      const cx = r.left + r.width/2;
+      const cy = r.top  + r.height/2;
+      const d = Math.hypot(cx - cursor.x, cy - cursor.y);
+      if (d < TRIGGER) startRun();
+    }
 
-      // всегда чуть “бродит”
+    document.addEventListener("mousemove", (e) => {
+      cursor.x = e.clientX;
+      cursor.y = e.clientY;
+      maybeStart();
+    });
+
+    document.addEventListener("touchmove", (e) => {
+      const t = e.touches[0];
+      cursor.x = t.clientX;
+      cursor.y = t.clientY;
+      maybeStart();
+    }, {passive:true});
+
+    // если ткнули по "Нет" — тоже стартуем
+    noFly.addEventListener("mouseenter", startRun);
+    noFly.addEventListener("touchstart", (e) => { startRun(); e.preventDefault(); }, {passive:false});
+
+    // физика: всегда чуть бродит + убегает от курсора + отскок от краёв
+    function step(){
+      if (!started){
+        // пока не стартанули — держим ровно в слоте
+        snapToSlot();
+        requestAnimationFrame(step);
+        return;
+      }
+
+      const w = noFly.offsetWidth, h = noFly.offsetHeight;
+      const bx = pos.x + w/2, by = pos.y + h/2;
+
+      // самобег чтобы не замирала
       vel.x += (Math.random()*2 - 1) * 0.45;
       vel.y += (Math.random()*2 - 1) * 0.45;
 
-      // убегает от мышки (половчее)
-      const dx = bx - lastCursor.x;
-      const dy = by - lastCursor.y;
+      // убегание от курсора
+      const dx = bx - cursor.x;
+      const dy = by - cursor.y;
       const dist = Math.hypot(dx, dy);
 
       if (dist < TRIGGER){
@@ -327,29 +365,25 @@
         const ny = dy / (dist || 1);
         const strength = (TRIGGER - dist) / TRIGGER;
 
-        const accel = 2.4 + strength * 9.2;
+        const accel = 2.6 + strength * 9.4;
         vel.x += nx * accel;
         vel.y += ny * accel;
 
-        // боковой уход, чтобы не предсказуемо
-        const perpX = -ny;
-        const perpY = nx;
+        // боковой финт
+        const perpX = -ny, perpY = nx;
         const side = (Math.random() < 0.5 ? -1 : 1);
         vel.x += perpX * side * (0.9 + strength * 2.0);
         vel.y += perpY * side * (0.9 + strength * 2.0);
       }
 
-      // трение и лимит скорости
-      vel.x *= 0.90;
-      vel.y *= 0.90;
+      // трение + лимит
+      vel.x *= 0.90; vel.y *= 0.90;
       const vmax = 24;
       vel.x = clamp(vel.x, -vmax, vmax);
       vel.y = clamp(vel.y, -vmax, vmax);
 
-      pos.x += vel.x;
-      pos.y += vel.y;
+      pos.x += vel.x; pos.y += vel.y;
 
-      // отскок от краёв экрана
       const b = bounds();
       if (pos.x < b.minX){ pos.x = b.minX; vel.x = Math.abs(vel.x) * 0.92; }
       if (pos.x > b.maxX){ pos.x = b.maxX; vel.x = -Math.abs(vel.x) * 0.92; }
@@ -359,47 +393,19 @@
       pos.x = clamp(pos.x, b.minX, b.maxX);
       pos.y = clamp(pos.y, b.minY, b.maxY);
 
-      noBtn.style.left = pos.x + "px";
-      noBtn.style.top  = pos.y + "px";
+      noFly.style.left = pos.x + "px";
+      noFly.style.top  = pos.y + "px";
+
+      requestAnimationFrame(step);
     }
+    requestAnimationFrame(step);
 
-    document.addEventListener("mousemove", (e) => {
-      lastCursor.x = e.clientX;
-      lastCursor.y = e.clientY;
-
-      if (!runaway){
-        const r0 = noBtn.getBoundingClientRect();
-        const cx = r0.left + r0.width/2;
-        const cy = r0.top  + r0.height/2;
-        const d0 = Math.hypot(cx - lastCursor.x, cy - lastCursor.y);
-        if (d0 <= TRIGGER) enableRunaway();
-      }
-    });
-    noBtn.addEventListener("mouseenter", () => enableRunaway());
-
-    // мобилка
-    document.addEventListener("touchmove", (e) => {
-      const t = e.touches[0];
-      lastCursor.x = t.clientX;
-      lastCursor.y = t.clientY;
-      if (!runaway) enableRunaway();
-    }, {passive:true});
-    noBtn.addEventListener("touchstart", (e) => {
-      const t = e.touches[0];
-      lastCursor.x = t.clientX;
-      lastCursor.y = t.clientY;
-      enableRunaway();
-      e.preventDefault();
-    }, {passive:false});
-
-    function rafNo(){ stepNo(); requestAnimationFrame(rafNo); }
-    requestAnimationFrame(rafNo);
-
-    noBtn.addEventListener("click", () => {
+    // если всё-таки нажали
+    noFly.addEventListener("click", () => {
       message.textContent = "дорогой виталик, ты забыл с кем живешь. тут нет выбора. подумай еще раз :)";
     });
 
-    /* ФЕЙЕРВЕРКИ */
+    /* Фейерверки */
     const yesBtn = document.getElementById("yes");
     const stage = document.getElementById("stage");
     const wrap = document.getElementById("wrap");
@@ -413,7 +419,7 @@
     }
 
     function burst(x,y){
-      const count = 110;
+      const count = 120;
       for(let i=0;i<count;i++){
         const a = Math.random()*Math.PI*2;
         const s = 2.8 + Math.random()*6.8;
@@ -432,8 +438,8 @@
       if (fw.style.display === "none") return;
 
       ctx.clearRect(0,0,fw.width,fw.height);
-
       particles = particles.filter(p => p.life > 0);
+
       for(const p of particles){
         p.life -= 1;
         p.vy += 0.05;
@@ -451,6 +457,9 @@
     }
 
     yesBtn.addEventListener("click", () => {
+      // убираем кнопку "нет" на финальном экране (чтобы не мешала)
+      noFly.style.display = "none";
+
       fw.style.display = "block";
       resizeFW();
 
@@ -465,12 +474,12 @@
       // быстрые фейерверки
       const start = performance.now();
       (function loop(t){
-        if (t - start < 8000){
+        if (t - start < 8500){
           burst(
             80 + Math.random()*(window.innerWidth - 160),
             80 + Math.random()*(window.innerHeight * 0.55)
           );
-          setTimeout(()=>requestAnimationFrame(loop), 220);
+          setTimeout(()=>requestAnimationFrame(loop), 200);
         }
       })(start);
 
