@@ -51,7 +51,7 @@
       z-index:1;
     }
 
-    /* НЕ ставим filter/transform на wrap, чтобы не ломать fixed в Safari */
+    /* НЕ ставим filter/transform на wrap — фикс для iOS fixed */
     .wrap{
       position:relative;
       width:min(980px, 96vw);
@@ -158,7 +158,7 @@
       position:fixed;
       left:-9999px;
       top:-9999px;
-      z-index:2147483647; /* максимальный слой */
+      z-index:2147483647;
       background:#e7e0e6;
       color:#3b1a22;
       font-weight:900;
@@ -166,7 +166,7 @@
       opacity:1;
       visibility:visible;
       box-shadow: 0 10px 22px rgba(0,0,0,0.18);
-      transform: translateZ(0); /* фикс для iOS */
+      transform: translateZ(0);
       will-change: left, top;
     }
 
@@ -187,20 +187,32 @@
       overflow:hidden;
     }
 
+    /* ✅ ТЕКСТ ПО ЦЕНТРУ + КРУПНЕЕ НА ТЕЛЕФОНЕ */
     .final-title{
-      position:relative;
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform: translate(-50%, -50%);
       z-index:12;
+
       width:min(980px, 94vw);
-      margin: 0 auto;
       text-align:center;
       color:#fff;
       font-weight:900;
-      font-size: clamp(26px, 7vw, 64px);
       line-height:1.05;
       text-shadow: 0 14px 34px rgba(0,0,0,0.55);
-      padding-left: 12px;
-      padding-right: 12px;
-      padding-top: calc(env(safe-area-inset-top) + clamp(12px, 4vh, 44px));
+      padding: 0 12px;
+
+      /* десктоп */
+      font-size: clamp(30px, 5.2vw, 64px);
+    }
+
+    /* 📱 телефон — заметно крупнее */
+    @media (max-width: 700px){
+      .final-title{
+        font-size: clamp(38px, 9vw, 60px);
+        width: 92vw;
+      }
     }
 
     .final-photo{
@@ -270,7 +282,7 @@
     setInterval(spawnHeart, 230);
     for(let i=0;i<18;i++) setTimeout(spawnHeart, i*120);
 
-    /* ---------- Кнопка "Нет" (не пропадает) ---------- */
+    /* ---------- Кнопка "Нет" ---------- */
     const noFly = document.getElementById("noFly");
     const noSlot = document.getElementById("noSlot");
     const message = document.getElementById("message");
@@ -279,8 +291,8 @@
     const PAD = 14;
     const TRIGGER = 190;
 
-    // СДЕЛАЛА ЧУТЬ БЫСТРЕЕ:
-    const SPEED_BOOST = 1.18; // >1 = быстрее
+    // чуть быстрее
+    const SPEED_BOOST = 1.18;
 
     let pos = { x: 0, y: 0 };
     let vel = { x: 0, y: 0 };
@@ -324,7 +336,6 @@
       if (d < TRIGGER) startRun();
     }
 
-    // Курсор
     document.addEventListener("mousemove", (e) => {
       cursor.x = e.clientX;
       cursor.y = e.clientY;
@@ -338,11 +349,9 @@
       maybeStart();
     }, {passive:true});
 
-    // Включаем бег при касании/наведении на саму кнопку
     noFly.addEventListener("mouseenter", startRun);
     noFly.addEventListener("touchstart", (e) => { startRun(); e.preventDefault(); }, {passive:false});
 
-    // Анти-баг: если вдруг пересчёт размеров/ориентация — вернуть кнопку в экран
     function keepInsideScreen(){
       if (!started) return;
       const b = bounds();
@@ -352,7 +361,6 @@
       noFly.style.top  = pos.y + "px";
     }
 
-    // Физика
     function step(){
       if (!started){
         snapToSlot();
@@ -367,7 +375,7 @@
       vel.x += (Math.random()*2 - 1) * 0.55 * SPEED_BOOST;
       vel.y += (Math.random()*2 - 1) * 0.55 * SPEED_BOOST;
 
-      // убегание от курсора
+      // убегает от курсора
       const dx = bx - cursor.x;
       const dy = by - cursor.y;
       const dist = Math.hypot(dx, dy);
@@ -381,14 +389,12 @@
         vel.x += nx * accel;
         vel.y += ny * accel;
 
-        // боковой финт
         const perpX = -ny, perpY = nx;
         const side = (Math.random() < 0.5 ? -1 : 1);
         vel.x += perpX * side * (1.0 + strength * 2.2) * SPEED_BOOST;
         vel.y += perpY * side * (1.0 + strength * 2.2) * SPEED_BOOST;
       }
 
-      // трение + лимит скорости (чуть быстрее)
       vel.x *= 0.90;
       vel.y *= 0.90;
 
@@ -399,7 +405,6 @@
       pos.x += vel.x;
       pos.y += vel.y;
 
-      // отскок от краёв
       const b = bounds();
       if (pos.x < b.minX){ pos.x = b.minX; vel.x = Math.abs(vel.x) * 0.92; }
       if (pos.x > b.maxX){ pos.x = b.maxX; vel.x = -Math.abs(vel.x) * 0.92; }
@@ -416,11 +421,9 @@
     }
     requestAnimationFrame(step);
 
-    // чтобы она не "терялась" при изменении адресной строки Safari / повороте
     window.addEventListener("resize", keepInsideScreen);
     window.addEventListener("orientationchange", () => setTimeout(keepInsideScreen, 250));
 
-    // если всё-таки нажали
     noFly.addEventListener("click", () => {
       message.textContent = "дорогой виталик, ты забыл с кем живешь. тут нет выбора. подумай еще раз :)";
     });
@@ -441,7 +444,7 @@
     }
 
     function burst(x,y){
-      const count = isMobile ? 70 : 120; // моб: меньше частиц
+      const count = isMobile ? 70 : 120;
       for(let i=0;i<count;i++){
         const a = Math.random()*Math.PI*2;
         const s = (isMobile ? 3.6 : 2.8) + Math.random()*(isMobile ? 7.6 : 6.8);
@@ -461,7 +464,7 @@
 
       ctx.clearRect(0,0,fw.width,fw.height);
 
-      const decay = isMobile ? 1.35 : 1.0; // моб: быстрее "сгорают"
+      const decay = isMobile ? 1.35 : 1.0;
       particles = particles.filter(p => p.life > 0);
 
       for(const p of particles){
@@ -481,7 +484,6 @@
     }
 
     yesBtn.addEventListener("click", () => {
-      // убираем "нет" на финале
       noFly.style.display = "none";
 
       fw.style.display = "block";
@@ -496,7 +498,7 @@
       `;
 
       const start = performance.now();
-      const interval = isMobile ? 140 : 180; // моб: чаще залпы, выглядит быстрее
+      const interval = isMobile ? 140 : 180;
 
       (function loop(t){
         if (t - start < 8500){
