@@ -50,86 +50,43 @@
 
     .wrap{
       position:relative;
-      width:min(920px, 96vw);
-      aspect-ratio: 16/9;
+      width:min(760px, 92vw);
       display:flex;
       align-items:center;
       justify-content:center;
       filter: drop-shadow(0 22px 50px rgba(0,0,0,0.45));
     }
 
-    /* белая подложка под jpg/прозрачность */
-    .doily-under{
-      position:absolute;
-      inset:6%;
-      background:#ffffff;
-      border-radius:24px;
-      z-index:1;
-      opacity:0.98;
-      pointer-events:none;
-    }
-
-    /* салфетка */
-    .doily-img{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      z-index:2;
-      pointer-events:none;
-    }
-
-    /* хомячки: выглядывают */
-    .ham{
-      position:absolute;
-      width:86px; height:86px;
-      image-rendering: pixelated;
-      pointer-events:none;
-      z-index:1; /* под салфеткой */
-      opacity:0;
-      transform: translateY(18px) rotate(0deg);
-      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.25));
-      animation: peek 4.2s ease-in-out infinite;
-    }
-    .ham.h2{ width:76px; height:76px; animation-delay: 0.8s; animation-duration: 4.6s; }
-    .ham.h3{ width:66px; height:66px; animation-delay: 1.4s; animation-duration: 3.9s; }
-
-    @keyframes peek{
-      0%, 35%   { opacity:0; transform: translateY(22px); }
-      45%, 75%  { opacity:1; transform: translateY(0px); }
-      85%, 100% { opacity:0; transform: translateY(22px); }
-    }
-
-    /* поцелуй */
-    .kiss{
-      position:absolute;
-      z-index:2;
-      width:min(145px, 30vw);
-      opacity:0.85;
-      left: 58%;
-      top: 60%;
-      transform: translate(-50%, -50%) rotate(-10deg);
-      pointer-events:none;
-      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.18));
-    }
-
     /* карточка */
     .card{
       position:relative;
-      z-index:3;
-      width:min(580px, 88vw);
-      padding:30px 24px 22px;
+      width:100%;
+      padding:34px 28px 26px;
       text-align:center;
       color:var(--ink);
-      border-radius:26px;
+      border-radius:28px;
       background: linear-gradient(#ffffff, #fff6fb);
-      box-shadow: inset 0 0 0 2px rgba(255,77,109,0.10);
+      box-shadow:
+        inset 0 0 0 2px rgba(255,77,109,0.10),
+        0 22px 60px rgba(0,0,0,0.25);
+      z-index:3;
+      overflow:hidden;
+    }
+
+    /* “тень” под карточкой для эффекта объёма */
+    .card::after{
+      content:"";
+      position:absolute;
+      inset:auto 14px 10px 14px;
+      height:22px;
+      background: radial-gradient(closest-side, rgba(0,0,0,0.22), transparent 70%);
+      filter: blur(6px);
+      z-index:-1;
     }
 
     h1{
-      margin:0 0 14px;
-      font-size: clamp(22px, 4.6vw, 32px);
+      margin:0 0 16px;
+      font-size: clamp(22px, 4.6vw, 34px);
       line-height:1.15;
     }
 
@@ -165,12 +122,13 @@
     #no{
       background:#e7e0e6;
       color:#3b1a22;
-      font-weight:700;
+      font-weight:800;
       position:relative; /* сначала рядом */
       z-index:10;
     }
+
     #no.runaway{
-      position:fixed; /* потом убегает */
+      position:fixed;
       z-index:999;
       left:0; top:0;
     }
@@ -182,6 +140,34 @@
       color:#8a0a26;
       position:relative;
       z-index:10;
+    }
+
+    /* ХОМЯЧКИ “выглядывают” из-под карточки */
+    .peek-zone{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:2; /* под карточкой */
+      overflow:hidden; /* важно: прячем часть хомяков */
+      border-radius:28px;
+    }
+    .ham{
+      position:absolute;
+      width:92px; height:92px;
+      image-rendering: pixelated;
+      filter: drop-shadow(0 12px 18px rgba(0,0,0,0.22));
+      opacity:0;
+      transform: translateY(40px);
+      animation: peek 4.2s ease-in-out infinite;
+    }
+    .ham.h2{ width:80px; height:80px; animation-delay: .9s; animation-duration: 4.7s; }
+    .ham.h3{ width:70px; height:70px; animation-delay: 1.6s; animation-duration: 3.9s; }
+
+    /* Они появляются снизу/сбоку и прячутся обратно “под карточку” */
+    @keyframes peek{
+      0%, 35%   { opacity:0; transform: translateY(46px); }
+      45%, 75%  { opacity:1; transform: translateY(0px); }
+      85%, 100% { opacity:0; transform: translateY(46px); }
     }
 
     /* салют */
@@ -212,20 +198,16 @@
 
   <div class="stage" id="stage">
     <div class="wrap" id="wrap">
+      <div class="card" id="card">
 
-      <!-- хомячки под салфеткой -->
-      <img class="ham h1" src="./hamster.png" alt="" style="left:10%; top:32%;">
-      <img class="ham h2" src="./hamster.png" alt="" style="left:18%; top:82%;">
-      <img class="ham h3" src="./hamster.png" alt="" style="left:86%; top:72%;">
+        <!-- зона “под карточкой”, где хомячки прячутся -->
+        <div class="peek-zone" aria-hidden="true">
+          <!-- выглядывают по краям карточки (часть будет скрыта overflow) -->
+          <img class="ham h1" src="./hamster.png" alt="" style="left:-10px; bottom:-18px;">
+          <img class="ham h2" src="./hamster.png" alt="" style="left:52%; bottom:-22px; transform: translate(-50%, 46px);">
+          <img class="ham h3" src="./hamster.png" alt="" style="right:-14px; bottom:-20px;">
+        </div>
 
-      <div class="doily-under" aria-hidden="true"></div>
-
-      <!-- ВАЖНО: doily.jpg -->
-      <img class="doily-img" src="./doily.jpg" alt="" onerror="this.style.display='none'">
-
-      <img class="kiss" src="./kiss.png" alt="">
-
-      <div class="card">
         <h1>Будешь ли ты моей валентинкой? 💘</h1>
 
         <div class="btnrow">
@@ -235,7 +217,6 @@
 
         <div id="message"></div>
       </div>
-
     </div>
   </div>
 
@@ -257,20 +238,19 @@
     setInterval(spawnHeart, 230);
     for(let i=0;i<18;i++) setTimeout(spawnHeart, i*120);
 
-    // "Нет" — упирается в края и НЕ выходит за экран
+    // "Нет" — половчее, но не выходит за экран (физика + упор в края)
     const noBtn = document.getElementById("no");
     const message = document.getElementById("message");
 
     let runaway = false;
     const PAD = 14;
-    const TRIGGER = 130;
+    const TRIGGER = 140;
 
-    // позиция кнопки в fixed-координатах, когда она убегает
     let pos = { x: 0, y: 0 };
     let vel = { x: 0, y: 0 };
+    let lastCursor = { x: window.innerWidth/2, y: window.innerHeight/2 };
 
     function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
-    function centerOfRect(rect){ return { x: rect.left + rect.width/2, y: rect.top + rect.height/2 }; }
 
     function enableRunaway(){
       if (runaway) return;
@@ -281,6 +261,10 @@
       noBtn.style.left = pos.x + "px";
       noBtn.style.top  = pos.y + "px";
       runaway = true;
+
+      // чтобы сразу “хитро” стартануло
+      vel.x += (Math.random()*2 - 1) * 6;
+      vel.y += (Math.random()*2 - 1) * 6;
     }
 
     function bounds(){
@@ -294,57 +278,56 @@
       };
     }
 
-    function stepPhysics(cursorX, cursorY){
-      // включаем режим при близком наведении
-      if (!runaway){
-        const r0 = noBtn.getBoundingClientRect();
-        const c0 = centerOfRect(r0);
-        const d0 = Math.hypot(c0.x - cursorX, c0.y - cursorY);
-        if (d0 <= TRIGGER) enableRunaway();
-        else return;
-      }
+    function step(){
+      if (!runaway) return;
 
       const w = noBtn.offsetWidth;
       const h = noBtn.offsetHeight;
 
-      // вектор "от курсора" к центру кнопки
+      // от курсора к кнопке
       const bx = pos.x + w/2;
       const by = pos.y + h/2;
-      const dx = bx - cursorX;
-      const dy = by - cursorY;
+      const dx = bx - lastCursor.x;
+      const dy = by - lastCursor.y;
       const dist = Math.hypot(dx, dy);
 
-      // если курсор близко — добавляем ускорение от курсора
+      // если близко — ускоряемся строго “от мышки”
       if (dist < TRIGGER){
         const nx = dx / (dist || 1);
         const ny = dy / (dist || 1);
-        const strength = (TRIGGER - dist) / TRIGGER; // 0..1
-        const accel = 1.6 + strength * 5.2;          // “сила убегания”
+        const strength = (TRIGGER - dist) / TRIGGER;
+
+        const accel = 2.2 + strength * 7.0;
         vel.x += nx * accel;
         vel.y += ny * accel;
 
-        // чуть “рандома”, чтобы убегало разными сторонами вдоль края
-        vel.x += (Math.random()*2 - 1) * 0.35;
-        vel.y += (Math.random()*2 - 1) * 0.35;
+        // хитрость: небольшой “уход в сторону”, чтобы не бежал по прямой
+        const perpX = -ny;
+        const perpY = nx;
+        const side = (Math.random() < 0.5 ? -1 : 1);
+        vel.x += perpX * side * (0.6 + strength * 1.2);
+        vel.y += perpY * side * (0.6 + strength * 1.2);
       }
 
-      // трение
-      vel.x *= 0.92;
-      vel.y *= 0.92;
+      // трение + ограничение скорости
+      vel.x *= 0.90;
+      vel.y *= 0.90;
+      const vmax = 18;
+      vel.x = clamp(vel.x, -vmax, vmax);
+      vel.y = clamp(vel.y, -vmax, vmax);
 
       // обновляем позицию
       pos.x += vel.x;
       pos.y += vel.y;
 
-      // УПОР В КРАЯ: если упёрлась — ставим на край и отражаем скорость
+      // упор в края: отражение
       const b = bounds();
-
       if (pos.x < b.minX){ pos.x = b.minX; vel.x = Math.abs(vel.x) * 0.85; }
       if (pos.x > b.maxX){ pos.x = b.maxX; vel.x = -Math.abs(vel.x) * 0.85; }
       if (pos.y < b.minY){ pos.y = b.minY; vel.y = Math.abs(vel.y) * 0.85; }
       if (pos.y > b.maxY){ pos.y = b.maxY; vel.y = -Math.abs(vel.y) * 0.85; }
 
-      // страховка: даже если что-то сломалось — всё равно внутри
+      // 100% страховка внутри
       pos.x = clamp(pos.x, b.minX, b.maxX);
       pos.y = clamp(pos.y, b.minY, b.maxY);
 
@@ -352,25 +335,38 @@
       noBtn.style.top  = pos.y + "px";
     }
 
-    // каждый кадр держим кнопку внутри и считаем “физику”
-    let lastCursor = { x: window.innerWidth/2, y: window.innerHeight/2 };
-    document.addEventListener("mousemove", (e) => { lastCursor.x = e.clientX; lastCursor.y = e.clientY; });
+    // включаем убегание, когда курсор близко или наводят
+    document.addEventListener("mousemove", (e) => {
+      lastCursor.x = e.clientX;
+      lastCursor.y = e.clientY;
+
+      if (!runaway){
+        const r0 = noBtn.getBoundingClientRect();
+        const cx = r0.left + r0.width/2;
+        const cy = r0.top  + r0.height/2;
+        const d0 = Math.hypot(cx - lastCursor.x, cy - lastCursor.y);
+        if (d0 <= TRIGGER) enableRunaway();
+      }
+    });
     noBtn.addEventListener("mouseenter", () => enableRunaway());
 
-    // мобильный “аналог”
+    // мобилка
     noBtn.addEventListener("touchstart", (e) => {
       const t = e.touches[0];
-      lastCursor.x = t.clientX; lastCursor.y = t.clientY;
-      stepPhysics(lastCursor.x, lastCursor.y);
+      lastCursor.x = t.clientX;
+      lastCursor.y = t.clientY;
+      enableRunaway();
       e.preventDefault();
     }, {passive:false});
 
+    // кадры
     function raf(){
-      stepPhysics(lastCursor.x, lastCursor.y);
+      step();
       requestAnimationFrame(raf);
     }
     requestAnimationFrame(raf);
 
+    // если всё-таки “кликнули”
     noBtn.addEventListener("click", () => {
       message.textContent = "дорогой виталик, ты забыл с кем живешь. тут нет выбора. подумай еще раз :)";
     });
