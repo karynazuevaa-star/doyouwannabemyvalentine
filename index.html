@@ -179,7 +179,7 @@
       display:none;
     }
 
-    /* финальный экран */
+    /* ---------- ФИНАЛ: ТЕКСТ СЛЕВА/СПРАВА + ФОТО ПО ЦЕНТРУ ---------- */
     .final-screen{
       position:relative;
       height:100vh;
@@ -187,51 +187,68 @@
       overflow:hidden;
     }
 
-    /* ✅ ТЕКСТ: десктоп меньше + чуть выше центра */
-    .final-title{
-      position:absolute;
-      left:50%;
-      top:42%;                 /* чуть выше, чтобы не на лицо */
-      transform: translate(-50%, -50%);
-      z-index:12;
-
-      width:min(980px, 94vw);
-      text-align:center;
-      color:#fff;
-      font-weight:900;
-      line-height:1.05;
-      text-shadow: 0 14px 34px rgba(0,0,0,0.55);
-      padding: 0 12px;
-
-      /* 🖥️ ДЕСКТОП: меньше */
-      font-size: clamp(24px, 2.6vw, 38px);
-    }
-
-    /* 📱 телефон — крупнее и по центру */
-    @media (max-width: 700px){
-      .final-title{
-        top:50%;
-        font-size: clamp(38px, 9vw, 60px);
-        width: 92vw;
-      }
-    }
-
+    /* фото поменьше */
     .final-photo{
       position:absolute;
       left:50%;
-      bottom: calc(-50px - env(safe-area-inset-bottom));
-      transform: translateX(-50%) scale(0.12);
+      bottom: calc(-40px - env(safe-area-inset-bottom));
+      transform: translateX(-50%) scale(0.10);
       transform-origin: center bottom;
-      width: min(620px, 90vw);
+      width: min(420px, 55vw);
       height:auto;
       opacity: 0;
-      animation: photoGrow 900ms cubic-bezier(.2,.9,.25,1) forwards;
+      animation: photoGrow .9s cubic-bezier(.2,.9,.25,1) forwards;
       filter: drop-shadow(0 22px 60px rgba(0,0,0,0.35));
-      z-index:11;
+      z-index:10;
       pointer-events:none;
     }
     @keyframes photoGrow{
       to{ transform: translateX(-50%) scale(1); opacity:1; }
+    }
+
+    /* текст по бокам */
+    .final-text{
+      position:absolute;
+      top:42%;
+      transform: translateY(-50%);
+      color:#fff;
+      font-weight:900;
+      line-height:1.1;
+      text-shadow: 0 10px 30px rgba(0,0,0,.6);
+      font-size: clamp(28px, 3vw, 46px);
+      width: 28vw;
+      z-index:12;
+      padding: 0 10px;
+    }
+    .final-text.left{
+      left:6%;
+      text-align:right;
+    }
+    .final-text.right{
+      right:6%;
+      text-align:left;
+    }
+
+    /* 📱 мобилка — две строки сверху, фото снизу */
+    @media (max-width: 700px){
+      .final-photo{
+        width: 82vw;
+        bottom: calc(-20px - env(safe-area-inset-bottom));
+      }
+      .final-text{
+        width: 92vw;
+        left:50%;
+        transform: translate(-50%, 0);
+        text-align:center;
+        font-size: clamp(34px, 8.6vw, 54px);
+      }
+      .final-text.left{
+        top: 16%;
+      }
+      .final-text.right{
+        top: 28%;
+        right:auto;
+      }
     }
   </style>
 </head>
@@ -291,14 +308,13 @@
     let started = false;
     const PAD = 14;
     const TRIGGER = 190;
-    const SPEED_BOOST = 1.18;
+    const SPEED_BOOST = 1.18; // чуть быстрее
 
     let pos = { x: 0, y: 0 };
     let vel = { x: 0, y: 0 };
     let cursor = { x: window.innerWidth/2, y: window.innerHeight/2 };
 
     function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
-
     function bounds(){
       const w = noFly.offsetWidth;
       const h = noFly.offsetHeight;
@@ -370,9 +386,11 @@
       const w = noFly.offsetWidth, h = noFly.offsetHeight;
       const bx = pos.x + w/2, by = pos.y + h/2;
 
+      // самобег
       vel.x += (Math.random()*2 - 1) * 0.55 * SPEED_BOOST;
       vel.y += (Math.random()*2 - 1) * 0.55 * SPEED_BOOST;
 
+      // убегает от курсора
       const dx = bx - cursor.x;
       const dy = by - cursor.y;
       const dist = Math.hypot(dx, dy);
@@ -489,8 +507,9 @@
       wrap.style.display = "none";
       stage.innerHTML = `
         <div class="final-screen">
-          <div class="final-title">я знала!!<br>я тоже тебя люблю!!</div>
+          <div class="final-text left">я знала!!</div>
           <img class="final-photo" src="./IMG_9008.PNG" alt="">
+          <div class="final-text right">я тоже тебя люблю!!</div>
         </div>
       `;
 
