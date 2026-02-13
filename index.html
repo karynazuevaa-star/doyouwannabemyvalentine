@@ -7,7 +7,7 @@
 
   <style>
     :root{
-      --bg:#3a0b16; /* тёмный бургунди */
+      --bg:#3a0b16;
       --bg2:#19050b;
       --ink:#2b0a10;
       --accent:#ff4d6d;
@@ -25,21 +25,12 @@
         linear-gradient(135deg, var(--bg), var(--bg2));
     }
 
-    /* ПАДАЮЩИЕ СЕРДЕЧКИ */
-    #hearts{
-      position:fixed;
-      inset:0;
-      pointer-events:none;
-      z-index:0;
-      overflow:hidden;
-    }
+    /* падающие сердечки */
+    #hearts{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
     .heart{
-      position:absolute;
-      top:-12vh;
-      user-select:none;
+      position:absolute; top:-12vh; user-select:none; opacity:0.95;
       filter: drop-shadow(0 8px 14px rgba(0,0,0,0.25));
       animation: fall linear forwards;
-      opacity:0.95;
     }
     @keyframes fall{
       0%{ transform: translateY(-12vh) rotate(0deg); opacity:0; }
@@ -47,7 +38,6 @@
       100%{ transform: translateY(115vh) rotate(360deg); opacity:0; }
     }
 
-    /* ЦЕНТР */
     .stage{
       position:relative;
       height:100vh;
@@ -58,29 +48,66 @@
       z-index:1;
     }
 
-    /* САЛФЕТКА КАК НА КАРТИНКЕ */
-    .doily{
+    .wrap{
       position:relative;
-      width:min(760px, 95vw);
+      width:min(880px, 96vw);
       aspect-ratio: 16/9;
       display:flex;
       align-items:center;
       justify-content:center;
       filter: drop-shadow(0 22px 50px rgba(0,0,0,0.45));
     }
-    .doily::before{
-      content:"";
+
+    /* ХОМЯЧКИ ПОД САЛФЕТКОЙ */
+    .ham{
       position:absolute;
-      inset:0;
-      background: url("./doily.png") center/contain no-repeat;
+      width:84px; height:84px;
+      image-rendering: pixelated;
       pointer-events:none;
-      z-index:1;
+      z-index:1;                 /* под салфеткой */
+      opacity:0;
+      transform: translateY(18px) rotate(0deg);
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.25));
+      animation: peek 3.8s ease-in-out infinite;
+    }
+    .ham.h2{ width:74px; height:74px; animation-delay: 0.9s; animation-duration: 4.2s; }
+    .ham.h3{ width:66px; height:66px; animation-delay: 1.6s; animation-duration: 3.6s; }
+
+    /* “выглядывает” -> виден короткое время -> прячется */
+    @keyframes peek{
+      0%, 35%   { opacity:0; transform: translateY(22px) rotate(0deg); }
+      45%, 70%  { opacity:1; transform: translateY(0px) rotate(0deg); }
+      80%, 100% { opacity:0; transform: translateY(22px) rotate(0deg); }
     }
 
-    /* Центральная “табличка” внутри салфетки */
+    /* салфетка (поверх хомяков) */
+    .doily-img{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      z-index:2;
+      pointer-events:none;
+    }
+
+    /* поцелуй (под карточкой, но над салфеткой) */
+    .kiss{
+      position:absolute;
+      z-index:2;
+      width:min(155px, 32vw);
+      opacity:0.85;
+      left: 58%;
+      top: 58%;
+      transform: translate(-50%, -50%) rotate(-10deg);
+      pointer-events:none;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.18));
+    }
+
+    /* карточка */
     .card{
       position:relative;
-      z-index:2;
+      z-index:3;
       width:min(560px, 86vw);
       padding:30px 24px 22px;
       text-align:center;
@@ -102,7 +129,10 @@
       justify-content:center;
       flex-wrap:wrap;
       margin-top:10px;
+      position:relative;
+      z-index:10;
     }
+
     button{
       font-size:18px;
       padding:12px 22px;
@@ -121,17 +151,20 @@
       font-weight:800;
       box-shadow: 0 10px 22px rgba(255,77,109,0.25);
     }
-    #yes:hover{ filter: brightness(1.03); }
 
-    /* "Нет" — фиксированно и будет убегать от курсора */
+    /* ВАЖНО: "Нет" сначала ОБЫЧНАЯ кнопка рядом с "Да" */
     #no{
       background:#e7e0e6;
       color:#3b1a22;
       font-weight:700;
-      position:fixed;     /* важно */
-      left: calc(50% + 80px);
-      top:  calc(50% + 70px);
-      z-index:5;
+      position:relative;     /* сначала рядом */
+      z-index:10;
+    }
+
+    /* Когда начнет убегать — добавим класс */
+    #no.runaway{
+      position:fixed;        /* начинает убегать по экрану */
+      z-index:999;
     }
 
     #message{
@@ -139,59 +172,11 @@
       min-height: 24px;
       font-size:16px;
       color:#8a0a26;
+      position:relative;
+      z-index:10;
     }
 
-    /* ПОЦЕЛУЙ НА САЛФЕТКЕ */
-    .kiss{
-      position:absolute;
-      z-index:3;
-      width:min(240px, 40vw);
-      opacity:0.9;
-      left: 58%;
-      top: 58%;
-      transform: translate(-50%, -50%) rotate(-8deg);
-      pointer-events:none;
-      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.18));
-    }
-
-    /* ХОМЯЧКИ (ТВОИ) — 3 штуки бегают по кругу */
-    .orbit{
-      position:absolute;
-      inset:-28px;
-      z-index:4;
-      pointer-events:none;
-    }
-    .orbiter{
-      position:absolute;
-      inset:0;
-      transform-origin:center;
-      animation: spin 10s linear infinite;
-    }
-    .orbiter.s2{ animation-duration: 13s; animation-direction: reverse; }
-    .orbiter.s3{ animation-duration: 11.5s; }
-
-    @keyframes spin{ to{ transform: rotate(360deg); } }
-
-    .hamster{
-      position:absolute;
-      left:50%;
-      top:0%;
-      transform: translate(-50%, -50%);
-      width: 84px;
-      height: 84px;
-      image-rendering: pixelated;
-      filter: drop-shadow(0 10px 18px rgba(0,0,0,0.25));
-      animation: bob .55s ease-in-out infinite;
-    }
-    .hamster.small{ width:72px; height:72px; opacity:0.98; }
-    .hamster.tiny{ width:62px; height:62px; opacity:0.95; }
-
-    @keyframes bob{
-      0%,100%{ transform: translate(-50%, -50%) translateY(0); }
-      50%{ transform: translate(-50%, -50%) translateY(3px); }
-    }
-
-    /* САЛЮТ */
+    /* салют */
     #fw{
       position:fixed;
       inset:0;
@@ -199,7 +184,6 @@
       z-index:10;
       display:none;
     }
-
     .final{
       position:relative;
       z-index:11;
@@ -219,22 +203,17 @@
   <canvas id="fw"></canvas>
 
   <div class="stage" id="stage">
-    <div class="doily" id="doily">
+    <div class="wrap" id="wrap">
 
-      <!-- хомячки -->
-      <div class="orbit" aria-hidden="true">
-        <div class="orbiter s1">
-          <img class="hamster" src="./hamster.png" alt="">
-        </div>
-        <div class="orbiter s2">
-          <img class="hamster small" src="./hamster.png" alt="">
-        </div>
-        <div class="orbiter s3">
-          <img class="hamster tiny" src="./hamster.png" alt="">
-        </div>
-      </div>
+      <!-- Хомячки под салфеткой: позиционируем у краёв -->
+      <img class="ham h1" src="./hamster.png" alt="" style="left:10%; top:33%;">
+      <img class="ham h2" src="./hamster.png" alt="" style="left:18%; top:82%;">
+      <img class="ham h3" src="./hamster.png" alt="" style="left:82%; top:76%;">
 
-      <!-- поцелуй -->
+      <!-- Салфетка -->
+      <img class="doily-img" src="./doily.png" alt="" onerror="this.style.display='none'">
+
+      <!-- Поцелуй -->
       <img class="kiss" src="./kiss.png" alt="">
 
       <div class="card">
@@ -247,23 +226,21 @@
 
         <div id="message"></div>
       </div>
+
     </div>
   </div>
 
   <script>
-    /* Сердечки */
+    // сердечки
     const heartsBox = document.getElementById('hearts');
     const heartChars = ["❤","💗","💖","💘","💞"];
     function spawnHeart(){
       const h = document.createElement('div');
       h.className = 'heart';
       h.textContent = heartChars[Math.floor(Math.random()*heartChars.length)];
-      const left = Math.random()*100;
-      const size = 14 + Math.random()*18;
+      h.style.left = (Math.random()*100) + "vw";
+      h.style.fontSize = (14 + Math.random()*18) + "px";
       const dur = 7 + Math.random()*7;
-
-      h.style.left = left + "vw";
-      h.style.fontSize = size + "px";
       h.style.animationDuration = dur + "s";
       heartsBox.appendChild(h);
       setTimeout(()=>h.remove(), (dur+1)*1000);
@@ -271,102 +248,97 @@
     setInterval(spawnHeart, 230);
     for(let i=0;i<18;i++) setTimeout(spawnHeart, i*120);
 
-    /* Кнопка "Нет" — убегает РОВНО ОТ КУРСОРА */
+    // "Нет" — сначала рядом, потом убегает и НЕ выходит за экран
     const noBtn = document.getElementById("no");
     const message = document.getElementById("message");
+    let runaway = false;
 
     function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+    function rectCenter(r){ return { x:r.left + r.width/2, y:r.top + r.height/2 }; }
 
-    function getRectCenter(rect){
-      return { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
+    function ensureRunawayMode(){
+      if (runaway) return;
+
+      // берём текущие координаты кнопки (когда она рядом с "Да")
+      const r = noBtn.getBoundingClientRect();
+
+      noBtn.classList.add("runaway");
+      // фиксируем позицию в тех же координатах, чтобы "не прыгала"
+      noBtn.style.left = r.left + "px";
+      noBtn.style.top  = r.top  + "px";
+
+      runaway = true;
     }
 
-    function pushAwayFromCursor(cursorX, cursorY){
-      const rect = noBtn.getBoundingClientRect();
-      const c = getRectCenter(rect);
+    function pushAway(cursorX, cursorY){
+      // включаем режим убегания, когда курсор достаточно близко
+      const r0 = noBtn.getBoundingClientRect();
+      const c0 = rectCenter(r0);
+      const d0 = Math.hypot(c0.x - cursorX, c0.y - cursorY);
+      const trigger = 130;
+
+      if (!runaway && d0 <= trigger) ensureRunawayMode();
+      if (!runaway) return;
+
+      const r = noBtn.getBoundingClientRect();
+      const c = rectCenter(r);
 
       const dx = c.x - cursorX;
       const dy = c.y - cursorY;
       const dist = Math.hypot(dx, dy);
 
-      // если курсор близко — отталкиваем
-      const trigger = 120;  // радиус "опасности"
       if (dist > trigger) return;
 
-      // направление строго от курсора
       const nx = dx / (dist || 1);
       const ny = dy / (dist || 1);
 
-      // насколько сдвигаем за один кадр (чем ближе курсор — тем сильнее)
       const strength = (trigger - dist) / trigger;
       const step = 18 + strength * 34;
 
-      // текущие координаты кнопки (fixed)
-      const left = parseFloat(noBtn.style.left || rect.left);
-      const top  = parseFloat(noBtn.style.top  || rect.top);
+      const left = parseFloat(noBtn.style.left || r.left);
+      const top  = parseFloat(noBtn.style.top  || r.top);
 
       let newLeft = left + nx * step;
       let newTop  = top  + ny * step;
 
-      // не даём уйти за экран
+      // НЕ ВЫХОДИТ ЗА ЭКРАН
       const pad = 10;
-      newLeft = clamp(newLeft, pad, window.innerWidth  - rect.width  - pad);
-      newTop  = clamp(newTop,  pad, window.innerHeight - rect.height - pad);
+      newLeft = clamp(newLeft, pad, window.innerWidth  - r.width  - pad);
+      newTop  = clamp(newTop,  pad, window.innerHeight - r.height - pad);
 
       noBtn.style.left = newLeft + "px";
       noBtn.style.top  = newTop  + "px";
     }
 
-    // начальные inline-координаты, чтобы дальше двигать точно
-    (function initNoPos(){
-      const r = noBtn.getBoundingClientRect();
-      noBtn.style.left = r.left + "px";
-      noBtn.style.top  = r.top  + "px";
-    })();
-
-    document.addEventListener("mousemove", (e) => {
-      pushAwayFromCursor(e.clientX, e.clientY);
-    });
-
-    // на мобиле: при попытке тапнуть — тоже уезжает
+    document.addEventListener("mousemove", (e) => pushAway(e.clientX, e.clientY));
     noBtn.addEventListener("touchstart", (e) => {
       const t = e.touches[0];
-      pushAwayFromCursor(t.clientX, t.clientY);
+      pushAway(t.clientX, t.clientY);
       e.preventDefault();
     }, {passive:false});
 
     noBtn.addEventListener("click", () => {
-      message.textContent =
-        "дорогой виталик, ты забыл с кем живешь. тут нет выбора. подумай еще раз :)";
+      message.textContent = "дорогой виталик, ты забыл с кем живешь. тут нет выбора. подумай еще раз :)";
     });
 
-    /* "Да" -> текст "я знала!!!" (без эмодзи) + фейерверки */
+    // "Да" -> "я знала!!!" + фейерверки (без эмодзи)
     const yesBtn = document.getElementById("yes");
     const stage = document.getElementById("stage");
+    const wrap = document.getElementById("wrap");
     const fw = document.getElementById("fw");
     const ctx = fw.getContext("2d");
-
     let particles = [];
+
     function burst(x,y){
       const count = 80 + Math.floor(Math.random()*50);
       for(let i=0;i<count;i++){
         const a = Math.random()*Math.PI*2;
         const s = 2 + Math.random()*5.5;
-        particles.push({
-          x,y,
-          vx: Math.cos(a)*s,
-          vy: Math.sin(a)*s,
-          life: 75 + Math.random()*35,
-          r: 2 + Math.random()*2.7,
-          hue: Math.random()*360
-        });
+        particles.push({ x,y, vx:Math.cos(a)*s, vy:Math.sin(a)*s, life:75+Math.random()*35, r:2+Math.random()*2.7, hue:Math.random()*360 });
       }
     }
-
     function tick(){
       ctx.clearRect(0,0,fw.width,fw.height);
-
-      // лёгкая дымка
       ctx.fillStyle = "rgba(0,0,0,0.16)";
       ctx.fillRect(0,0,fw.width,fw.height);
 
@@ -374,10 +346,8 @@
       for(const p of particles){
         p.life -= 1;
         p.vy += 0.06;
-        p.vx *= 0.99;
-        p.vy *= 0.99;
-        p.x += p.vx;
-        p.y += p.vy;
+        p.vx *= 0.99; p.vy *= 0.99;
+        p.x += p.vx; p.y += p.vy;
 
         ctx.beginPath();
         ctx.fillStyle = `hsla(${p.hue}, 95%, 65%, ${Math.max(p.life/110,0)})`;
@@ -392,18 +362,13 @@
       fw.width = window.innerWidth;
       fw.height = window.innerHeight;
 
-      // оставляем фон, убираем салфетку
-      document.getElementById("doily").style.display = "none";
-
+      wrap.style.display = "none";
       stage.innerHTML = `<div class="final">я знала!!!</div>`;
 
       const start = performance.now();
       (function loop(t){
         if (t - start < 7000){
-          burst(
-            80 + Math.random()*(window.innerWidth-160),
-            80 + Math.random()*(window.innerHeight*0.45)
-          );
+          burst(80 + Math.random()*(window.innerWidth-160), 80 + Math.random()*(window.innerHeight*0.45));
           setTimeout(()=>requestAnimationFrame(loop), 130);
         }
       })(start);
@@ -412,7 +377,6 @@
     });
 
     window.addEventListener("resize", () => {
-      // чтобы не ломалось после ресайза
       if (fw.style.display !== "none"){
         fw.width = window.innerWidth;
         fw.height = window.innerHeight;
