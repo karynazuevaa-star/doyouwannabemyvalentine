@@ -25,7 +25,7 @@
         linear-gradient(135deg, var(--bg), var(--bg2));
     }
 
-    /* падающие сердечки */
+    /* сердечки */
     #hearts{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
     .heart{
       position:absolute; top:-12vh; user-select:none; opacity:0.95;
@@ -50,14 +50,13 @@
 
     .wrap{
       position:relative;
-      width:min(760px, 92vw);
+      width:min(980px, 96vw);
       display:flex;
       align-items:center;
       justify-content:center;
       filter: drop-shadow(0 22px 50px rgba(0,0,0,0.45));
     }
 
-    /* карточка */
     .card{
       position:relative;
       width:100%;
@@ -69,19 +68,8 @@
       box-shadow:
         inset 0 0 0 2px rgba(255,77,109,0.10),
         0 22px 60px rgba(0,0,0,0.25);
-      z-index:3;
+      z-index:2;
       overflow:hidden;
-    }
-
-    /* “тень” под карточкой для эффекта объёма */
-    .card::after{
-      content:"";
-      position:absolute;
-      inset:auto 14px 10px 14px;
-      height:22px;
-      background: radial-gradient(closest-side, rgba(0,0,0,0.22), transparent 70%);
-      filter: blur(6px);
-      z-index:-1;
     }
 
     h1{
@@ -97,7 +85,7 @@
       flex-wrap:wrap;
       margin-top:10px;
       position:relative;
-      z-index:10;
+      z-index:5;
     }
 
     button{
@@ -115,21 +103,26 @@
     #yes{
       background: var(--accent);
       color:#fff;
-      font-weight:800;
+      font-weight:900;
       box-shadow: 0 10px 22px rgba(255,77,109,0.25);
     }
 
+    /* ВАЖНО: "Нет" всегда видима */
     #no{
       background:#e7e0e6;
       color:#3b1a22;
-      font-weight:800;
-      position:relative; /* сначала рядом */
-      z-index:10;
+      font-weight:900;
+      position:relative;  /* сначала рядом */
+      z-index:9999;       /* поверх всего */
+      display:inline-block;
+      opacity:1;
+      visibility:visible;
     }
 
+    /* когда убегает */
     #no.runaway{
       position:fixed;
-      z-index:999;
+      z-index:9999;
       left:0; top:0;
     }
 
@@ -139,16 +132,16 @@
       font-size:16px;
       color:#8a0a26;
       position:relative;
-      z-index:10;
+      z-index:5;
     }
 
-    /* ХОМЯЧКИ “выглядывают” из-под карточки */
+    /* хомячки выглядывают из-под карточки */
     .peek-zone{
       position:absolute;
       inset:0;
       pointer-events:none;
-      z-index:2; /* под карточкой */
-      overflow:hidden; /* важно: прячем часть хомяков */
+      z-index:1;          /* под контентом карточки */
+      overflow:hidden;
       border-radius:28px;
     }
     .ham{
@@ -157,13 +150,12 @@
       image-rendering: pixelated;
       filter: drop-shadow(0 12px 18px rgba(0,0,0,0.22));
       opacity:0;
-      transform: translateY(40px);
+      transform: translateY(46px);
       animation: peek 4.2s ease-in-out infinite;
     }
     .ham.h2{ width:80px; height:80px; animation-delay: .9s; animation-duration: 4.7s; }
     .ham.h3{ width:70px; height:70px; animation-delay: 1.6s; animation-duration: 3.9s; }
 
-    /* Они появляются снизу/сбоку и прячутся обратно “под карточку” */
     @keyframes peek{
       0%, 35%   { opacity:0; transform: translateY(46px); }
       45%, 75%  { opacity:1; transform: translateY(0px); }
@@ -200,12 +192,10 @@
     <div class="wrap" id="wrap">
       <div class="card" id="card">
 
-        <!-- зона “под карточкой”, где хомячки прячутся -->
         <div class="peek-zone" aria-hidden="true">
-          <!-- выглядывают по краям карточки (часть будет скрыта overflow) -->
-          <img class="ham h1" src="./hamster.png" alt="" style="left:-10px; bottom:-18px;">
-          <img class="ham h2" src="./hamster.png" alt="" style="left:52%; bottom:-22px; transform: translate(-50%, 46px);">
-          <img class="ham h3" src="./hamster.png" alt="" style="right:-14px; bottom:-20px;">
+          <img class="ham h1" src="./hamster.png" alt="" style="left:-12px; bottom:-18px;">
+          <img class="ham h2" src="./hamster.png" alt="" style="left:50%; bottom:-22px; transform: translate(-50%, 46px);">
+          <img class="ham h3" src="./hamster.png" alt="" style="right:-16px; bottom:-20px;">
         </div>
 
         <h1>Будешь ли ты моей валентинкой? 💘</h1>
@@ -238,13 +228,13 @@
     setInterval(spawnHeart, 230);
     for(let i=0;i<18;i++) setTimeout(spawnHeart, i*120);
 
-    // "Нет" — половчее, но не выходит за экран (физика + упор в края)
+    // "Нет" — убегает хитро, но НЕ выходит за экран
     const noBtn = document.getElementById("no");
     const message = document.getElementById("message");
 
     let runaway = false;
     const PAD = 14;
-    const TRIGGER = 140;
+    const TRIGGER = 150;
 
     let pos = { x: 0, y: 0 };
     let vel = { x: 0, y: 0 };
@@ -254,17 +244,23 @@
 
     function enableRunaway(){
       if (runaway) return;
+
+      // фиксируем ровно на месте рядом с "Да"
       const r = noBtn.getBoundingClientRect();
+
       noBtn.classList.add("runaway");
       pos.x = r.left;
       pos.y = r.top;
+
+      // стартовый "пинок", чтобы не залипала
+      vel.x = (Math.random()*2 - 1) * 6;
+      vel.y = (Math.random()*2 - 1) * 6;
+
+      // сразу ставим, чтобы она не "пропала"
       noBtn.style.left = pos.x + "px";
       noBtn.style.top  = pos.y + "px";
-      runaway = true;
 
-      // чтобы сразу “хитро” стартануло
-      vel.x += (Math.random()*2 - 1) * 6;
-      vel.y += (Math.random()*2 - 1) * 6;
+      runaway = true;
     }
 
     function bounds(){
@@ -284,50 +280,49 @@
       const w = noBtn.offsetWidth;
       const h = noBtn.offsetHeight;
 
-      // от курсора к кнопке
+      // от мыши к центру кнопки
       const bx = pos.x + w/2;
       const by = pos.y + h/2;
       const dx = bx - lastCursor.x;
       const dy = by - lastCursor.y;
       const dist = Math.hypot(dx, dy);
 
-      // если близко — ускоряемся строго “от мышки”
+      // если близко — ускоряемся от мышки + боковой уход
       if (dist < TRIGGER){
         const nx = dx / (dist || 1);
         const ny = dy / (dist || 1);
         const strength = (TRIGGER - dist) / TRIGGER;
 
-        const accel = 2.2 + strength * 7.0;
+        const accel = 2.0 + strength * 7.6;
         vel.x += nx * accel;
         vel.y += ny * accel;
 
-        // хитрость: небольшой “уход в сторону”, чтобы не бежал по прямой
+        // боковая "хитрость"
         const perpX = -ny;
         const perpY = nx;
         const side = (Math.random() < 0.5 ? -1 : 1);
-        vel.x += perpX * side * (0.6 + strength * 1.2);
-        vel.y += perpY * side * (0.6 + strength * 1.2);
+        vel.x += perpX * side * (0.7 + strength * 1.5);
+        vel.y += perpY * side * (0.7 + strength * 1.5);
       }
 
-      // трение + ограничение скорости
+      // трение + лимит скорости
       vel.x *= 0.90;
       vel.y *= 0.90;
-      const vmax = 18;
+      const vmax = 20;
       vel.x = clamp(vel.x, -vmax, vmax);
       vel.y = clamp(vel.y, -vmax, vmax);
 
-      // обновляем позицию
       pos.x += vel.x;
       pos.y += vel.y;
 
-      // упор в края: отражение
+      // упор в края + отражение
       const b = bounds();
       if (pos.x < b.minX){ pos.x = b.minX; vel.x = Math.abs(vel.x) * 0.85; }
       if (pos.x > b.maxX){ pos.x = b.maxX; vel.x = -Math.abs(vel.x) * 0.85; }
       if (pos.y < b.minY){ pos.y = b.minY; vel.y = Math.abs(vel.y) * 0.85; }
       if (pos.y > b.maxY){ pos.y = b.maxY; vel.y = -Math.abs(vel.y) * 0.85; }
 
-      // 100% страховка внутри
+      // абсолютная страховка внутри
       pos.x = clamp(pos.x, b.minX, b.maxX);
       pos.y = clamp(pos.y, b.minY, b.maxY);
 
@@ -335,11 +330,12 @@
       noBtn.style.top  = pos.y + "px";
     }
 
-    // включаем убегание, когда курсор близко или наводят
+    // курсор
     document.addEventListener("mousemove", (e) => {
       lastCursor.x = e.clientX;
       lastCursor.y = e.clientY;
 
+      // включаем убегание, если приблизились
       if (!runaway){
         const r0 = noBtn.getBoundingClientRect();
         const cx = r0.left + r0.width/2;
@@ -348,6 +344,8 @@
         if (d0 <= TRIGGER) enableRunaway();
       }
     });
+
+    // если навели прямо на кнопку — включаем точно
     noBtn.addEventListener("mouseenter", () => enableRunaway());
 
     // мобилка
@@ -359,14 +357,11 @@
       e.preventDefault();
     }, {passive:false});
 
-    // кадры
-    function raf(){
-      step();
-      requestAnimationFrame(raf);
-    }
+    // анимация
+    function raf(){ step(); requestAnimationFrame(raf); }
     requestAnimationFrame(raf);
 
-    // если всё-таки “кликнули”
+    // если вдруг кликнули
     noBtn.addEventListener("click", () => {
       message.textContent = "дорогой виталик, ты забыл с кем живешь. тут нет выбора. подумай еще раз :)";
     });
