@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Будешь моей валентинкой?</title>
+
+<style>
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#ff758c,#ff7eb3);
+    font-family:Arial;
+    overflow:hidden;
+}
+
+.card{
+    background:white;
+    padding:50px;
+    border-radius:25px;
+    text-align:center;
+    box-shadow:0 15px 40px rgba(0,0,0,0.2);
+}
+
+h1{
+    margin-bottom:30px;
+}
+
+button{
+    font-size:20px;
+    padding:15px 35px;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    margin:10px;
+}
+
+#yes{
+    background:#ff4d6d;
+    color:white;
+}
+
+#no{
+    background:#ddd;
+    position:absolute;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+<h1>Будешь ли ты моей валентинкой? 💘</h1>
+
+<button id="yes">Да ❤️</button>
+<button id="no">Нет</button>
+
+<h2 id="message"></h2>
+</div>
+
+<script>
+
+const noBtn = document.getElementById("no");
+const message = document.getElementById("message");
+
+noBtn.addEventListener("mouseover", () => {
+
+const x = Math.random() * (window.innerWidth - 100);
+const y = Math.random() * (window.innerHeight - 50);
+
+noBtn.style.left = x + "px";
+noBtn.style.top = y + "px";
+});
+
+noBtn.addEventListener("click", () => {
+message.innerText =
+"дорогой виталик, ты забыл с кем живешь. тут нет выбора. подумай еще раз :)";
+});
+
+document.getElementById("yes").addEventListener("click", () => {
+
+document.body.innerHTML =
+"<h1 style='font-size:60px;color:white;'>Я знала 😌❤️</h1>";
+
+});
+
+</script>
+
+</body>
+</html>
